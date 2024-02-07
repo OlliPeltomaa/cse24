@@ -10,6 +10,9 @@ CORS(app)
 latest_data = None
 last_updated = None
 
+def dummy_func(x):
+    return x
+
 def fetch_and_store_aapl_data():
     global latest_data
     global last_updated
