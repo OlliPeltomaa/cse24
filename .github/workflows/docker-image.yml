@@ -17,4 +17,7 @@ jobs:
         uses: docker/setup-buildx-action@v1
 
       - name: Build Docker image
-        run: docker buildx build --platform linux/amd64,linux/arm64 -t cse-image:latest .
+        run: |
+          echo "${{secrets.DOCKERPWD}}" | docker login -u "peltolma" --password-stdin
+          docker image build -t peltolma/cse-image .
+          docker push peltolma/cse-image
