@@ -1,9 +1,9 @@
-name: Run pytest on Main
+name: Run pytest on Master
 
 on:
   push:
     branches:
-      - main
+      - master
 
 jobs:
   test:
