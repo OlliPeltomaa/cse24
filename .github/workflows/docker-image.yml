@@ -1,6 +1,7 @@
 name: Docker image builder
 
 on:
+  workflow_dispatch:
   push:
     branch: [master]
 
