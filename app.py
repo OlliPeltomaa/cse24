@@ -116,9 +116,9 @@ def bid_or_offer():
                 if has_instances:
                    print("T3")
                 else:
-                    # Store only to bids, no trade
+                    # Store only to offers, no trade
                     cur.execute(
-                    "INSERT INTO bids (user_id, offer_price, offer_quantity) VALUES (%s, %s, %s)",
+                    "INSERT INTO offers (user_id, offer_price, offer_quantity) VALUES (%s, %s, %s)",
                      (user_id, price, quantity)
                     )
                     mysql.connection.commit()
