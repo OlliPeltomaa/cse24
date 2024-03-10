@@ -13,7 +13,6 @@ def test_dummy():
 def test_dummy_func():
     assert dummy_func(1) == 1
 
-"""
 # --- Testing for successful db init ----------------------------------------
 @pytest.fixture
 def app():
@@ -28,6 +27,7 @@ def app():
     
 
 def test_db_initialization(app):
+    print(app)
     with app.test_request_context():
         create_db()
 
@@ -100,4 +100,3 @@ def test_bid_with_valid_values():
     response = requests.post(url)
     assert response.status_code == 400
     assert response.json()["error"] == "Invalid price or quantity, no action taken"
-"""
