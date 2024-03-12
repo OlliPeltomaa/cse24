@@ -70,7 +70,7 @@ def bid_or_offer():
             reference = latest_data['bid'][0]        
         elif action_type.lower() == "offer":
             reference = latest_data['ask'][0]
-        if not (isinstance(price, float) and validate_price(price, reference) and quantity < reasonable_limit):
+        if not (isinstance(price, float) and validate_price(price, reference) and 0 < quantity and quantity < reasonable_limit):
             return jsonify({"error": "Invalid price or quantity, no action taken"}), 400
 
         if action_type.lower() == "bid":

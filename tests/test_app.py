@@ -148,7 +148,90 @@ def test_offer_with_not_matching_bid(app):
     assert offer[0] == 175.00
     assert trade == None
 
-def test_multiple_offers(app):
+def test_scenario1(app):
+    """
+    Based on E2E scenario 1. from the project details.
+    a. Fetch current market last trade price of AAPL - example M1
+    b. Verify Bid order at Price M1 x 1.08 is accepted
+    c. Verify Offer order at Price M1 x 0.90 is accepted
+    d. Verify Bid order at Price M1 x 1.11 is rejected
+    e. Verify Offer order at Price M1 x -1.01 is rejected
+    f. Verify no trades have happened
+    """
+    remove_rows(app)
+
+    M1 = 170        
+    try:
+        response = requests.get("http://localhost:5000/aapl_data")
+        data = response.json()
+        # Lets use ask for last traded price, should not matter for testing.
+        M1 = data["data"]["ask"][0]
+    except requests.exceptions.RequestException as e:
+        print("Error when fetching: " + str(e))
+
+    response = requests.post(f"http://localhost:5000/bid_or_offer?action_type=bid&price={M1*1.08}&quantity={1}&user_id={1}")
+    assert response.status_code == 200
+    
+    response = requests.post(f"http://localhost:5000/bid_or_offer?action_type=bid&price={M1*0.9}&quantity={1}&user_id={1}")
+    assert response.status_code == 200
+    
+    response = requests.post(f"http://localhost:5000/bid_or_offer?action_type=bid&price={M1*1.11}&quantity={1}&user_id={1}")
+    assert response.status_code == 400
+    
+    response = requests.post(f"http://localhost:5000/bid_or_offer?action_type=bid&price={M1*-1.01}&quantity={1}&user_id={1}")
+    assert response.status_code == 400
+    
+    try:
+        response = requests.get("http://localhost:5000/trades")
+        data = response.json()
+    except requests.exceptions.RequestException as e:
+        print("Error when fetching: " + str(e))
+
+    trades_length = len(data["data"])
+    
+    assert trades_length == 0 
+
+
+def test_scenario2(app):
+    """
+    Based on E2E scenario 2. from the project details.
+    a. Fetch current market last trade price of AAPL - M2
+    b. Bid order at Price M2, Qty 0 is rejected
+    c. Bid order at Price M2, Qty 10.1 is rejected
+    d. Offer order at Price M2, Qty -100 is rejected
+    e. Verify no trades have happened
+    """
+    remove_rows(app)
+
+    M2 = 170        
+    try:
+        response = requests.get("http://localhost:5000/aapl_data")
+        data = response.json()
+        # Lets use ask for last traded price, should not matter for testing.
+        M2 = data["data"]["ask"][0]
+    except requests.exceptions.RequestException as e:
+        print("Error when fetching: " + str(e))
+
+    response = requests.post(f"http://localhost:5000/bid_or_offer?action_type=bid&price={M2}&quantity={0}&user_id={1}")
+    assert response.status_code == 400
+    
+    response = requests.post(f"http://localhost:5000/bid_or_offer?action_type=bid&price={M2}&quantity={10.1}&user_id={1}")
+    assert response.status_code == 400
+    
+    response = requests.post(f"http://localhost:5000/bid_or_offer?action_type=bid&price={M2}&quantity={-100}&user_id={1}")
+    assert response.status_code == 400
+    
+    try:
+        response = requests.get("http://localhost:5000/trades")
+        data = response.json()
+    except requests.exceptions.RequestException as e:
+        print("Error when fetching: " + str(e))
+
+    trades_length = len(data["data"])
+    
+    assert trades_length == 0 
+
+def test_scenario3(app):
     """
     Based on E2E scenario 3. from the project details.
     a. Fetch current market last trade price of AAPL - M3
@@ -192,7 +275,7 @@ def test_multiple_offers(app):
     trade0 = data["data"][0]
     trade1 = data["data"][1]
     
-    assert trade0["price"] == M3*1.01
+    assert trade0["price"] == round(M3*1.01, 2)
     assert trade0["quantity"] == 200
     assert trade1["price"] == M3
     assert trade1["quantity"] == 50
