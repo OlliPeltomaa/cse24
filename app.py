@@ -236,8 +236,6 @@ def fetch_and_store_aapl_data():
 def get_aapl_data():
     global latest_data
     global last_updated
-
-    print("data", latest_data)
     
     # If none or more than 1h passed from the latest retrieval
     if latest_data is None or last_updated is None or (datetime.datetime.now() - last_updated).seconds > 3600:
