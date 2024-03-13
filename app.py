@@ -41,13 +41,21 @@ mysql = MySQL(app)
 def return_app():
     return app
 
-def dummy_func(x):
-    return x
-
-def validate_price(price, reference):
+def valid_price(price, reference):
     # Is the price within 10 percent margin from the reference?
     margin = 0.1 * reference
     return (reference - margin) <= price <= (reference + margin)
+
+# is the quantity of bid or offer valid
+def valid_quantity(quantity):
+    # floating quantity not accepted
+    if isinstance(quantity, float):
+        return False
+    # quantity has to be larger than 0
+    if quantity <= 0:
+        return False
+
+    return True
 
 # Can be locally tested with such approach for example
 #curl -X POST "http://localhost:5000/bid_or_offer?action_type=bid&price=175.26&quantity=500&user_id=1"
@@ -70,7 +78,7 @@ def bid_or_offer():
             reference = latest_data['bid'][0]        
         elif action_type.lower() == "offer":
             reference = latest_data['ask'][0]
-        if not (isinstance(price, float) and validate_price(price, reference) and 0 < quantity and quantity < reasonable_limit):
+        if not (isinstance(price, float) or not valid_price(price, reference) or not valid_quantity(quantity)):
             return jsonify({"error": "Invalid price or quantity, no action taken"}), 400
 
         if action_type.lower() == "bid":
@@ -83,7 +91,7 @@ def bid_or_offer():
             has_instances = len(result) > 0
             if has_instances:
                 print("T3")
-                offers_to_be_removed, offers_to_be_updated, trades_to_be_created, quantities_left = match_bid_to_offers(quantity,result)            
+                offers_to_be_removed, offers_to_be_updated, trades_to_be_created, quantities_left = match_bid_to_offers(quantity,result)         
 
                 for (id,q) in offers_to_be_updated:
                     cur.execute(f"UPDATE offers SET offer_quantity = {q} WHERE offer_order_id = {id}")
@@ -228,9 +236,11 @@ def fetch_and_store_aapl_data():
 def get_aapl_data():
     global latest_data
     global last_updated
+
+    print("data", latest_data)
     
     # If none or more than 1h passed from the latest retrieval
-    if latest_data is None or (datetime.datetime.now() - last_updated).seconds > 3600:
+    if latest_data is None or last_updated is None or (datetime.datetime.now() - last_updated).seconds > 3600:
         fetch_and_store_aapl_data()
         
     return jsonify({"success": True, "data": latest_data}), 200

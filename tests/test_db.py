@@ -7,12 +7,6 @@ from unittest.mock import patch, MagicMock
 
 # For local testing, have app.py running and run this from root: python -m pytest -v tests/test_app.py
 
-def test_dummy():
-    pass
-
-def test_dummy_func():
-    assert dummy_func(1) == 1
-
 # --- Testing for successful db init ----------------------------------------
 @pytest.fixture
 def app():
