@@ -32,13 +32,16 @@ latest_data = None
 last_updated = None
 reasonable_limit = 10000
 
-
-db = mysql.connector.connect(
-  host="localhost",
-  user="cse",
-  password="cse",
-  database="cse"
-)
+db = None
+try:
+    db = mysql.connector.connect(
+    host="localhost",
+    user="cse",
+    password="cse",
+    database="cse"
+    )
+except:
+    print("Can't connect to localhost")
 
 # app.config['MYSQL_HOST'] = 'localhost'
 # app.config['MYSQL_USER'] = 'cse'
@@ -253,13 +256,16 @@ def get_aapl_data():
 
 @app.route('/trades', methods=['GET'])
 def get_trades():
-    cur = db.cursor()
-    cur.execute(f"SELECT trade_timestamp, trade_price, trade_quantity  FROM trades")
-    result = cur.fetchall()
-    trades = []
-    for (ts, p, q) in result:
-        trades.append({"timestamp": ts, "price":p,"quantity":q})
-    return jsonify({"success": True, "data": trades}), 200
+    try:
+        cur = db.cursor()
+        cur.execute(f"SELECT trade_timestamp, trade_price, trade_quantity  FROM trades")
+        result = cur.fetchall()
+        trades = []
+        for (ts, p, q) in result:
+            trades.append({"timestamp": ts, "price":p,"quantity":q})
+        return jsonify({"success": True, "data": trades}), 200
+    except:
+        return "Can't connect to db"
 
 @app.before_first_request
 def create_db():
