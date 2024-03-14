@@ -2,7 +2,7 @@ from flask import Flask, jsonify, request,render_template
 import requests
 from flask_cors import CORS
 import datetime
-from flask_mysqldb import MySQL
+import mysql.connector
 
 # For local testing, have mysql db running, with database named 'cse' and user 'cse' created:
 """
@@ -32,11 +32,19 @@ latest_data = None
 last_updated = None
 reasonable_limit = 10000
 
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'cse'
-app.config['MYSQL_PASSWORD'] = 'cse'
-app.config['MYSQL_DB'] = 'cse'
-mysql = MySQL(app)
+
+db = mysql.connector.connect(
+  host="localhost",
+  user="cse",
+  password="cse",
+  database="cse"
+)
+
+# app.config['MYSQL_HOST'] = 'localhost'
+# app.config['MYSQL_USER'] = 'cse'
+# app.config['MYSQL_PASSWORD'] = 'cse'
+# app.config['MYSQL_DB'] = 'cse'
+# mysql = MySQL(app)
 
 def return_app():
     return app
@@ -83,7 +91,7 @@ def bid_or_offer():
 
         if action_type.lower() == "bid":
             #------------------ Db-matching and functionalities ------------------
-            cur = mysql.connection.cursor()
+            cur = db.cursor()
             # Offers that match the bid amount
             # lowest offer first, same price orders ordered by timestamp, oldest first.
             cur.execute(f"SELECT offer_order_id, user_id, offer_price, offer_quantity FROM offers WHERE offer_price <= {price} ORDER BY offer_price ASC, offer_timestamp ASC")
@@ -106,7 +114,7 @@ def bid_or_offer():
                 if (quantities_left > 0):
                     cur.execute("INSERT INTO bids (user_id, bid_price, bid_quantity) VALUES (%s, %s, %s)", 
                                                                                                 (user_id, price, quantities_left)) 
-                mysql.connection.commit()
+                db.commit()
                 cur.close()
                 return jsonify({"success": True, "message": f"Suitable offers for your bid was found - quantities left after trade(s): {quantities_left} -> trade stored into system"}), 200
             
@@ -116,7 +124,7 @@ def bid_or_offer():
                 "INSERT INTO bids (user_id, bid_price, bid_quantity) VALUES (%s, %s, %s)",
                 (user_id, price, quantity)
                 )
-                mysql.connection.commit()
+                db.commit()
                 cur.close()
                 return jsonify({"success": False, "message": f"No, suitable offers for your bid - price: {price}, quantity: {quantity} -> bid stored into system"}), 200
             
@@ -126,7 +134,7 @@ def bid_or_offer():
         elif action_type.lower() == "offer":
         
             #------------------ Db-matching and functionalities ------------------
-            cur = mysql.connection.cursor()
+            cur = db.cursor()
 
             # Bids that match the offer amount
             # highest bids first, same price orders ordered by timestamp, oldest first.
@@ -150,7 +158,7 @@ def bid_or_offer():
                 if (quantities_left > 0):
                     cur.execute("INSERT INTO offers (user_id, offer_price, offer_quantity) VALUES (%s, %s, %s)", 
                                                                                                 (user_id, price, quantities_left)) 
-                mysql.connection.commit()
+                db.commit()
                 cur.close()
                 return jsonify({"success": True, "message": f"Suitable bids for your offer was found - quantities left after trade(s): {quantities_left} -> trade stored into system"}), 200
             else:
@@ -159,7 +167,7 @@ def bid_or_offer():
                 "INSERT INTO offers (user_id, offer_price, offer_quantity) VALUES (%s, %s, %s)",
                 (user_id, price, quantity)
                 )
-                mysql.connection.commit()
+                db.commit()
                 cur.close()
                 return jsonify({"success": False, "message": f"No, suitable bids for your offer - price: {price}, quantity: {quantity} -> offer stored into system"}), 200
             #------------------ Db-matching and functionalities ------------------
@@ -245,7 +253,7 @@ def get_aapl_data():
 
 @app.route('/trades', methods=['GET'])
 def get_trades():
-    cur = mysql.connection.cursor()
+    cur = db.cursor()
     cur.execute(f"SELECT trade_timestamp, trade_price, trade_quantity  FROM trades")
     result = cur.fetchall()
     trades = []
@@ -256,7 +264,7 @@ def get_trades():
 @app.before_first_request
 def create_db():
     try:
-        cur = mysql.connection.cursor()
+        cur = db.cursor()
 
         query_users = """
         CREATE TABLE IF NOT EXISTS users (
@@ -300,7 +308,7 @@ def create_db():
         cur.execute(offers)
         cur.execute(trades)
 
-        mysql.connection.commit()
+        db.commit()
         cur.close()
         
     except Exception as e:
